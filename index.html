@@ -34,6 +34,12 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(20,17,29,.94);backdro
 .note-stem{position:absolute;width:3px;height:55px;background:#171225;transform:translateX(-50%);z-index:2}
 .clef{position:absolute;left:11%;top:31px;font-size:75px;font-family:serif;z-index:3}
 .note-answer{font-size:25px;font-weight:900;text-align:center;margin:10px 0}
+
+.keyboard{display:flex;justify-content:center;position:relative;height:145px;margin:15px 0 8px;overflow:hidden;border-radius:14px;background:#0d0b12;padding:0 8px 8px}
+.whitekey{position:relative;flex:1;max-width:54px;background:linear-gradient(#fff,#e8e5eb);border:1px solid #bbb;color:#171225;border-radius:0 0 8px 8px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;font-size:11px;z-index:1}
+.blackkey{position:relative;width:31px;height:88px;margin:0 -15.5px;background:linear-gradient(#222,#050505);border:1px solid #000;border-radius:0 0 7px 7px;z-index:3;box-shadow:0 4px 5px #0008;color:#ddd;display:flex;align-items:flex-end;justify-content:center;padding-bottom:7px;font-size:9px}
+.whitekey.selected,.blackkey.selected{background:#a77cff!important;color:#fff}
+.lesson-list{display:grid;gap:9px}.lesson-item{display:flex;justify-content:space-between;align-items:center;padding:13px 14px;border-radius:15px;background:#211b2e;border:1px solid #332b43}.lesson-item b{font-size:14px}.lesson-item span{font-size:12px;color:var(--muted)}
 </style>
 </head>
 <body><div class="wrap" id="app"></div><nav><div class="navin">
@@ -84,6 +90,12 @@ if(p==="home")a.innerHTML=`<header><div class="brand"><div class="logo">🎼</di
 <div class="tiny">Level ${level()} · ${xpIn()}/100 XP</div><div class="xpbar"><div class="xpfill" style="width:${xpIn()}%"></div></div>
 <div class="actions"><button class="btn primary" onclick="setPage('learn')">📚 Jetzt lernen</button><button class="btn" onclick="setPage('quiz')">🎯 Quiz starten</button></div></div>
 <div class="grid"><div class="stat"><b>🔥 ${user.streak}</b><span>Tage Lernserie</span></div><div class="stat"><b>⭐ ${user.xp}</b><span>XP gesammelt</span></div><div class="stat"><b>🧠 ${mastered()}</b><span>Meisterhaft</span></div><div class="stat"><b>📚 ${due().length}</b><span>Heute fällig</span></div></div>
+<div class="section">🎯 Heute lernen</div>
+<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div><b>Deine persönliche Session</b><p class="muted" style="margin:5px 0 0">Begriffe + Noten, angepasst an deine Schwächen.</p></div><div style="font-size:34px">🧠</div></div>
+<div class="lesson-list" style="margin-top:13px">
+<div class="lesson-item"><b>📚 Musikbegriffe</b><span>5 Aufgaben</span></div>
+<div class="lesson-item"><b>🎹 Notenlesen</b><span>5 Aufgaben</span></div></div>
+<button class="btn primary" style="width:100%;margin-top:12px" onclick="todaySession()">▶️ Heute lernen</button></div>
 <div class="section">🎯 Tagesziel</div><div class="card"><b>${Math.min(user.daily,10)} / 10 Lernaktionen</b><div class="xpbar"><div class="xpfill" style="width:${Math.min(100,user.daily*10)}%"></div></div><span class="tiny">${user.daily>=10?"Ziel geschafft! 🎉":"Noch "+(10-user.daily)+" bis zum Tagesziel."}</span></div>
 <div class="section">🎹 Notenlernen</div>
 <div class="card"><b>Vom Notennamen bis zum Klavier</b><p class="muted">Violinschlüssel, Bassschlüssel, Noten erkennen und später sogar Geschwindigkeit trainieren.</p>
@@ -155,27 +167,33 @@ function notesHome(){
   document.getElementById("app").innerHTML=`
   <header><div class="brand">🎹 Notenlernen</div><div class="level">LEVEL ${level()}</div></header>
   <div class="hero"><h1>Noten lesen – Schritt für Schritt 🎼</h1>
-  <p class="muted">Erkenne Noten auf dem Notensystem, lerne beide Schlüssel und trainiere später Geschwindigkeit.</p>
+  <p class="muted">Erkenne Noten, finde sie auf dem Klavier und trainiere Geschwindigkeit.</p>
   <div class="actions">
     <button class="btn primary" onclick="noteGame('treble')">🎼 Violinschlüssel</button>
     <button class="btn" onclick="noteGame('bass')">🎵 Bassschlüssel</button>
   </div>
   <div class="actions">
     <button class="btn" onclick="noteGame('mixed')">🔀 Beide Schlüssel</button>
-    <button class="btn" onclick="noteGame('speed')">⚡ Speed-Training</button>
+    <button class="btn" onclick="noteGame('speed')">⚡ Speed</button>
+  </div>
+  <div class="actions">
+    <button class="btn primary" onclick="keyboardGame('noteToKey')">🎹 Note → Taste</button>
+    <button class="btn" onclick="keyboardGame('keyToNote')">🔄 Taste → Note</button>
   </div></div>
   <div class="grid">
     <div class="stat"><b>🎯 ${noteState.correct}</b><span>richtig</span></div>
     <div class="stat"><b>❌ ${noteState.wrong}</b><span>falsch</span></div>
-    <div class="stat"><b>🧠 ${masteredNotes}</b><span>Noten gefestigt</span></div>
-    <div class="stat"><b>⚡ ${noteState.speedBest===null?"–":noteState.speedBest.toFixed(2)+" s"}</b><span>beste Zeit</span></div>
+    <div class="stat"><b>🧠 ${masteredNotes}</b><span>gefestigt</span></div>
+    <div class="stat"><b>⚡ ${noteState.speedBest===null?"–":noteState.speedBest.toFixed(2)+" s"}</b><span>Bestzeit</span></div>
   </div>
-  <div class="section">🧠 Lernweg</div>
-  <div class="card"><b>1. Noten erkennen</b><p class="muted">Einzelne Töne auf den Linien und Zwischenräumen.</p></div>
-  <div class="card"><b>2. Schlüssel wechseln</b><p class="muted">Violinschlüssel und Bassschlüssel sicher auseinanderhalten.</p></div>
-  <div class="card"><b>3. ⚡ Speed</b><p class="muted">Wie schnell findest du den Notennamen?</p></div>`;
+  <div class="section">📈 Dein Lernweg</div>
+  <div class="card"><div class="lesson-list">
+    <div class="lesson-item"><b>🟢 Stufe 1 · C–G</b><span>Grundlagen</span></div>
+    <div class="lesson-item"><b>🟡 Stufe 2 · größerer Umfang</b><span>Aufbau</span></div>
+    <div class="lesson-item"><b>🔴 Stufe 3 · beide Schlüssel</b><span>Fortgeschritten</span></div>
+    <div class="lesson-item"><b>⚡ Stufe 4 · Speed</b><span>Automatisieren</span></div>
+  </div></div>`;
 }
-
 function noteGame(mode){
   noteMode=mode; noteRound=0; noteScore=0;
   noteStart=mode==="speed"?performance.now():0;
@@ -234,5 +252,65 @@ function noteResult(){
   <button class="btn" style="margin-top:10px;width:100%" onclick="setPage('home')">🏠 Startseite</button></div>`;
 }
 
+
+let keyRound=0,keyScore=0,keyMode="noteToKey",keyCurrent=null;
+const keyNotes=[
+  ["C4","C"],["D4","D"],["E4","E"],["F4","F"],["G4","G"],["A4","A"],["B4","H"],
+  ["C5","C"],["D5","D"],["E5","E"],["F5","F"],["G5","G"],["A5","A"],["B5","H"]
+];
+function keyboardHTML(selected=""){
+  const whites=["C","D","E","F","G","A","H"];
+  const blacks=["C#","D#","", "F#","G#","A#",""];
+  return `<div class="keyboard">${whites.map((w,i)=>`<button class="whitekey ${selected===w?"selected":""}" onclick="keyAnswer(${JSON.stringify(w)})">${w}</button>${blacks[i]?`<button class="blackkey ${selected===blacks[i]?"selected":""}" onclick="keyAnswer(${JSON.stringify(blacks[i])})">${blacks[i]}</button>`:""}`).join("")}</div>`;
+}
+function keyboardGame(mode){keyMode=mode;keyRound=0;keyScore=0;nextKeyQuestion()}
+function nextKeyQuestion(){
+  if(keyRound>=10){keyResult();return}
+  keyCurrent=keyNotes[Math.floor(Math.random()*keyNotes.length)];
+  const note=keyCurrent[1], octave=keyCurrent[0];
+  document.getElementById("app").innerHTML=`
+  <header><div class="brand">🎹 ${keyMode==="noteToKey"?"Note → Taste":"Taste → Note"}</div><div class="level">${keyRound+1} / 10</div></header>
+  <div class="card">
+  ${keyMode==="noteToKey"?`<div class="tiny">Welche Klaviertaste gehört zu dieser Note?</div><div class="question" style="text-align:center;font-size:34px">🎼 ${note}${octave.slice(-1)}</div>`:`<div class="tiny">Welche Note gehört zu dieser Taste?</div><div class="question" style="text-align:center">🎹 ${note}${octave.slice(-1)}</div>`}
+  ${keyboardHTML()}
+  ${keyMode==="keyToNote"?`<div class="actions"><button class="btn" onclick="noteChoice('C')">C</button><button class="btn" onclick="noteChoice('D')">D</button></div><div class="actions"><button class="btn" onclick="noteChoice('E')">E</button><button class="btn" onclick="noteChoice('F')">F</button></div><div class="actions"><button class="btn" onclick="noteChoice('G')">G</button><button class="btn" onclick="noteChoice('A')">A</button></div><div class="actions"><button class="btn" onclick="noteChoice('H')">H</button></div>`:""}
+  </div>`;
+}
+function keyAnswer(v){
+  if(keyMode!=="noteToKey")return;
+  const expected=keyCurrent[1];
+  const ok=v===expected;
+  document.querySelectorAll(".whitekey,.blackkey").forEach(x=>x.disabled=true);
+  if(ok)keyScore++;
+  noteState[ok?"correct":"wrong"]++;
+  noteState.mastered[expected]=Math.min(5,(noteState.mastered[expected]||0)+(ok?1:0));
+  addXP(ok?12:2);touch();saveNotes();
+  setTimeout(()=>{keyRound++;nextKeyQuestion()},450);
+}
+function noteChoice(v){
+  if(keyMode!=="keyToNote")return;
+  const ok=v===keyCurrent[1];
+  if(ok)keyScore++;
+  noteState[ok?"correct":"wrong"]++;
+  noteState.mastered[keyCurrent[1]]=Math.min(5,(noteState.mastered[keyCurrent[1]]||0)+(ok?1:0));
+  addXP(ok?12:2);touch();saveNotes();
+  document.querySelectorAll(".btn").forEach(x=>x.disabled=true);
+  setTimeout(()=>{keyRound++;nextKeyQuestion()},450);
+}
+function keyResult(){
+  if(keyScore>=8)confetti();
+  document.getElementById("app").innerHTML=`<div class="result"><div class="badge">🎹</div><h1>Klaviertraining fertig!</h1><div class="score">${keyScore}/10</div><p>${keyScore*12+(10-keyScore)*2} XP verdient</p><p class="muted">${keyScore===10?"Perfekt! Deine Noten und Tasten verstehen sich prächtig. 🏆":keyScore>=8?"Sehr stark! Jetzt wird das langsam automatisch. 😎":"Noch ein paar Runden – dann sitzen die Tasten. 💪"}</p><div class="actions"><button class="btn primary" onclick="keyboardGame('${keyMode}')">🔁 Nochmal</button><button class="btn" onclick="notesHome()">🎹 Notenbereich</button></div></div>`;
+}
+
+function todaySession(){
+  const ids=due().slice(0,5);
+  if(ids.length){
+    quiz=ids;qi=0;score=0;wrong=[];
+    renderQuiz();
+  }else{
+    keyboardGame("noteToKey");
+  }
+}
+
 render("home");
-</script></body></html>
+</script><script>if("serviceWorker" in navigator){navigator.serviceWorker.register("./sw.js").catch(()=>{});}</script></body></html>
