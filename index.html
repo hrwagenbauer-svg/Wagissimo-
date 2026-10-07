@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Wagissimo">
+<title>Wagissimo</title>
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--text:#18202a;--muted:#6d7682;--accent:#635bff;--good:#159957;--bad:#d64545}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif;background:var(--bg);color:var(--text)}
+main{max-width:560px;margin:auto;padding:24px 18px 40px}
+header{padding:10px 4px 20px}h1{font-size:34px;margin:0 0 5px}h2{margin:0 0 12px}.sub{color:var(--muted)}
+.card{background:var(--card);border-radius:22px;padding:22px;margin:14px 0;box-shadow:0 5px 25px #0000000c}
+button{width:100%;border:0;border-radius:15px;padding:15px;margin:7px 0;font-size:17px;font-weight:650;background:#eef0f6;color:var(--text)}
+button.primary{background:var(--accent);color:white}button.good{background:#e7f7ef;color:var(--good)}button.bad{background:#fdeaea;color:var(--bad)}
+.term{font-size:38px;font-weight:800;margin:10px 0}.meaning{font-size:20px;line-height:1.4}.small{font-size:14px;color:var(--muted)}
+.pill{display:inline-block;background:#eeeefe;color:var(--accent);padding:6px 10px;border-radius:99px;font-weight:700;font-size:13px}
+.bar{height:10px;background:#e7e8ed;border-radius:99px;overflow:hidden}.fill{height:100%;background:var(--accent);width:0}
+.hidden{display:none}.center{text-align:center}.emoji{font-size:50px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{background:#f1f2f7;border-radius:16px;padding:15px}.stat b{font-size:25px;display:block}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <span class="pill">🎼 Weiter im Takt</span>
+  <h1>Wagissimo</h1>
+  <div class="sub">Musikbegriffe lernen, behalten – und dabei nicht einschlafen. 😉<br><b>Weiter im Takt.</b></div>
+</header>
+
+<section id="home">
+  <div class="card">
+    <h2>Dein Fortschritt</h2>
+    <div class="stats">
+      <div class="stat"><b id="xp">0</b>XP</div>
+      <div class="stat"><b id="mastered">0</b>gemeistert</div><div class="stat"><b id="streak">0</b>Tage 🔥</div><div class="stat"><b id="level">1</b>Level</div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Bereit?</h2>
+    <p class="sub">10 Fragen. Schwierige Begriffe kommen häufiger.</p>
+    <button class="primary" onclick="startQuiz()">🎯 Quiz starten</button>
+    <button onclick="startLearn()">📚 Lernen</button>
+  </div>
+</section>
+
+<section id="quiz" class="hidden">
+  <div class="small" id="counter"></div>
+  <div class="bar"><div class="fill" id="progress"></div></div>
+  <div class="card center">
+    <div class="emoji">🎵</div>
+    <div class="term" id="qterm"></div>
+    <p class="sub">Was bedeutet das?</p>
+    <div id="answers"></div>
+    <div id="feedback"></div>
+  </div>
+</section>
+
+<section id="learn" class="hidden">
+  <button onclick="goHome()">← Zurück</button>
+  <div class="card center">
+    <span class="pill" id="lcat"></span>
+    <div class="term" id="lterm"></div>
+    <div class="meaning" id="lmeaning"></div>
+    <p class="sub" id="lexample"></p>
+    <button class="primary" onclick="nextLearn()">Nächster Begriff →</button>
+  </div>
+</section>
+</main>
+
+<script>
+const terms=[
+["Largo","Tempo","sehr langsam, breit","Stell dir vor, die Musik hat Zeit. Sehr viel Zeit. 😌"],
+["Adagio","Tempo","langsam, ruhig","Langsam und getragen."],
+["Andante","Tempo","gehend, mäßig langsam","Ungefähr wie ein entspanntes Gehen."],
+["Allegro","Tempo","schnell, lebhaft","Schnell – nicht zwingend panisch. 😉"],
+["Presto","Tempo","sehr schnell","Hier hat die Musik es wirklich eilig."],
+["Accelerando","Tempo","allmählich schneller werdend","Das Tempo zieht an."],
+["Ritardando","Tempo","allmählich langsamer werdend","Die Musik nimmt Tempo heraus."],
+["A tempo","Tempo","wieder im ursprünglichen Tempo","Zurück zum vorherigen Tempo."],
+["Piano (p)","Dynamik","leise","Leise spielen – nicht automatisch langweilig."],
+["Forte (f)","Dynamik","laut, kräftig","Kräftig und deutlich."],
+["Pianissimo (pp)","Dynamik","sehr leise","Flüstern mit Noten. 🤫"],
+["Fortissimo (ff)","Dynamik","sehr laut","Sehr kräftig – aber bitte kontrolliert."],
+["Crescendo","Dynamik","allmählich lauter werdend","Die Lautstärke wächst."],
+["Diminuendo","Dynamik","allmählich leiser werdend","Die Lautstärke nimmt ab."],
+["Legato","Artikulation","gebunden, ohne hörbare Unterbrechungen","Die Töne fließen ineinander."],
+["Staccato","Artikulation","kurz und deutlich getrennt","Jeder Ton bekommt seinen eigenen kleinen Auftritt."],
+["Tenuto","Artikulation","gehalten, voll ausgeführt","Der Ton wird bewusst getragen."],
+["Marcato","Artikulation","markiert, betont","Der Ton bekommt Nachdruck."],
+["Cantabile","Vortrag","gesanglich","Spiele so, dass es wie eine gesungene Melodie wirkt."],
+["Dolce","Vortrag","zart, lieblich","Sanft und freundlich."],
+["Espressivo","Vortrag","ausdrucksvoll","Gefühl ausdrücklich erwünscht."],
+["Con brio","Vortrag","mit Feuer, lebhaft","Energie und Schwung."],
+["Maestoso","Vortrag","majestätisch","Groß, würdevoll, königlich."],
+["Rubato","Vortrag","frei bewegliches Tempo","Das Tempo darf für den Ausdruck etwas atmen."],
+["Ritornell","Form","wiederkehrender Abschnitt","Ein musikalischer Abschnitt kehrt wieder."],
+["Rondo","Form","Form mit wiederkehrendem Hauptthema","A–B–A–C–A – das A kommt immer wieder."],
+["Variation","Form","Veränderung eines musikalischen Themas","Dasselbe Thema – aber jedes Mal etwas anders."],
+["Sonate","Form","mehrsätzige musikalische Form bzw. Komposition","Ein wichtiger Begriff der klassischen Instrumentalmusik."],
+["Nocturne","Form","Nachtstück, meist stimmungsvoll","Musik für die Nacht – zumindest dem Namen nach. 🌙"],
+["Melodie","Grundbegriffe","Abfolge von Tönen, die als musikalische Linie wahrgenommen wird","Das, was man oft als Erstes mitsummt."],
+["Harmonie","Grundbegriffe","Zusammenklang und Verbindung von Tönen/Akkorden","Wie mehrere Töne miteinander funktionieren."],
+["Rhythmus","Grundbegriffe","zeitliche Ordnung von Tönen und Pausen","Das Gerüst der Bewegung."],
+["Takt","Grundbegriffe","regelmäßige Gliederung der Musik in Zählzeiten","Die musikalischen „Schubladen“."],
+["Tonika","Harmonie","Grundton bzw. Grundakkord der Tonart","Das musikalische Zuhause."],
+["Dominante","Harmonie","Quinte über der Tonika; wichtige Spannung zur Tonika","Sie möchte häufig zurück nach Hause."],
+["Subdominante","Harmonie","Akkord auf der vierten Stufe","Ein wichtiger Baustein neben Tonika und Dominante."],
+["Sostenuto","Tempo/Vortrag","getragen, gehalten","Nicht schleppen – bewusst getragen spielen."],
+["Grave","Tempo/Vortrag","sehr langsam und ernst","Der Name klingt schon entsprechend feierlich."],
+["Vivace","Tempo","lebhaft, munter","Lebendig und voller Energie."],
+["Prestissimo","Tempo","extrem schnell","Presto war noch nicht schnell genug. 😅"],
+["Ad libitum","Vortrag","frei, nach Belieben","Der Musiker darf innerhalb des musikalischen Rahmens frei entscheiden."],
+["Alla breve","Takt","im halben Taktgefühl, meist 2/2","Die Musik fühlt sich in größeren Schlägen an."],
+["Da capo (D.C.)","Form","vom Anfang","Zurück auf Start – musikalisch völlig legal."],
+["Dal segno (D.S.)","Form","ab dem Zeichen","Springe zurück zum Segno-Zeichen."],
+["Fine","Form","Ende","Hier ist Schluss. Wirklich."],
+["Coda","Form","Schlussteil","Ein zusätzlicher Abschnitt am Ende eines Werkes."],
+["Con moto","Vortrag","mit Bewegung","Etwas bewegter und vorwärtsdrängend."],
+["Con fuoco","Vortrag","mit Feuer","Leidenschaft und Energie."],
+["Agitato","Vortrag","aufgeregt, erregt","Unruhig, spannungsvoll und bewegt."],
+["Grazioso","Vortrag","anmutig, graziös","Leicht, elegant und charmant."],
+["Lento","Tempo","langsam","Noch ein Kandidat für die gemütliche Abteilung."],
+["Molto","Vortrag","sehr, viel","Verstärkt die folgende Bezeichnung."],
+["Poco","Vortrag","wenig, etwas","Eine kleine Dosis musikalischer Veränderung."],
+["Sempre","Vortrag","immer, stets","Die Anweisung gilt weiter."],
+["Subito","Vortrag","plötzlich","Eine Änderung tritt unmittelbar ein."],
+["Simile","Vortrag","in gleicher Weise","Mach weiter wie zuvor."],
+["Attacca","Form","ohne Pause weiter","Der nächste Satz beginnt direkt."],
+["Arpeggio","Harmonie","Akkordtöne nacheinander gespielt","Der Akkord wird gewissermaßen aufgefächert."],
+["Unisono","Ensemble","im Einklang, gleiche Töne","Alle landen auf demselben Ton."],
+["A cappella","Ensemble","ohne Instrumentalbegleitung","Nur Stimmen – kein musikalisches Sicherheitsnetz."],
+["Solo","Ensemble","allein bzw. von einer Stimme/einem Instrument ausgeführt","Der Moment gehört einer Stimme oder einem Instrument."],
+["Tutti","Ensemble","alle zusammen","Jetzt spielen alle mit."],
+["Duett","Ensemble","Zusammenspiel von zwei Stimmen/Instrumenten","Musik zu zweit."],
+["Ensemble","Ensemble","Zusammenspiel mehrerer Musiker","Gemeinsam klingt's meistens besser."],
+["Orchester","Ensemble","größere Gruppe von Instrumentalisten","Viele Instrumente, ein gemeinsamer musikalischer Plan."],
+["Akkord","Harmonie","Zusammenklang mehrerer Töne","Mehrere Töne gleichzeitig – harmonisch organisiert."],
+["Kadenz","Harmonie","harmonische Folge mit abschließendem Charakter","Eine typische harmonische Wendung, oft zur Tonika."],
+["Modulation","Harmonie","Wechsel der Tonart","Die Musik zieht in eine neue tonale Wohnung."],
+["Chromatik","Tonmaterial","Verwendung von Halbtonschritten bzw. chromatischen Tönen","Die Töne rücken sehr dicht zusammen."],
+["Diatonik","Tonmaterial","Tonmaterial innerhalb einer Tonleiter/Tonart","Die Töne bleiben im diatonischen System."],
+["Synkope","Rhythmus","Betonung einer normalerweise unbetonten Zählzeit","Der Rhythmus setzt die Akzente ein bisschen frech daneben."],
+["Auftakt","Rhythmus","unvollständiger Takt am Beginn eines Stücks","Das Stück beginnt, bevor der erste volle Takt da ist."],
+["Pause","Rhythmus","bewusste zeitliche Unterbrechung","Auch Schweigen gehört zur Musik."],
+["Metrum","Rhythmus","regelmäßiges Grundmaß der Schläge","Der innere Puls der Musik."],
+["Puls","Rhythmus","gleichmäßiger Grundschlag","Das musikalische Herzklopfen."],
+["Akzent","Artikulation","Betonung eines Tons oder Schlags","Dieser Ton bekommt Extra-Aufmerksamkeit."],
+["Portato","Artikulation","getragen, aber leicht getrennt","Zwischen Legato und Staccato."],
+["Fermate","Artikulation","verlängerter Halt eines Tons/einer Pause","Hier darf die Zeit kurz stehen bleiben."],
+["Glissando","Artikulation","gleitender Übergang zwischen Tönen","Von einem Ton zum anderen rutschen."],
+["Triller","Verzierung","schneller Wechsel zwischen benachbarten Tönen","Musikalisches Hin-und-Her."],
+["Mordent","Verzierung","kurze Wechselverzierung","Eine kleine, schnelle Ausschmückung."],
+["Vibrato","Klang","leichte regelmäßige Tonhöhen-Schwankung","Der Ton bekommt Bewegung und Farbe."],
+["Tremolo","Klang","schnelle Wiederholung oder Schwankung","Ein bewusstes musikalisches Flattern."],
+["Timbre","Klang","Klangfarbe","Warum zwei Instrumente denselben Ton unterschiedlich klingen lassen."],
+["Register","Klang","Tonbereich bzw. Lage eines Instruments","Tief, mittel oder hoch – je nach Kontext."],
+["Transposition","Tonmaterial","Übertragung in eine andere Tonhöhe/Tonart","Dasselbe musikalische Material zieht um."],
+["Intervall","Tonmaterial","Abstand zwischen zwei Tönen","Die Entfernung zwischen zwei Tönen."],
+["Oktave","Tonmaterial","Intervall von acht diatonischen Tonstufen","Gleicher Tonname – eine Etage höher oder tiefer."],
+["Quinte","Tonmaterial","Intervall von fünf diatonischen Tonstufen","Ein besonders wichtiges Intervall der Harmonik."],
+["Terz","Tonmaterial","Intervall von drei diatonischen Tonstufen","Entscheidend für Dur- und Mollcharakter."],
+["Dur","Tonart","Tongeschlecht mit großer Terz","Oft als hell oder freundlich beschrieben."],
+["Moll","Tonart","Tongeschlecht mit kleiner Terz","Oft als dunkler oder melancholischer empfunden."],
+["Tonleiter","Tonmaterial","geordnete Folge von Tönen","Die musikalische Leiter – hoffentlich ohne Muskelkater."],
+["Chromatische Tonleiter","Tonmaterial","Tonleiter aus zwölf Halbtonschritten","Jeder Halbton ist dabei."],
+["Grundton","Harmonie","zentraler Ton einer Tonart oder eines Akkords","Der wichtigste Bezugspunkt."],
+["Vorzeichen","Notation","Zeichen zur Veränderung der Tonhöhe","Kreuz, Be oder Auflösungszeichen verändern Töne."],
+["Partitur","Notation","Gesamtdarstellung der Stimmen eines Werkes","Der musikalische Gesamtplan."],
+["Partie","Notation","Notierte Stimme bzw. Einzelpart eines Musikers","Das, was dein eigener Notenständer normalerweise zeigt."],
+["Opus","Allgemein","Werknummer eines Komponisten","Hilft dabei, Werke zu identifizieren."],
+["Thema","Form","prägnante musikalische Idee","Eine musikalische Hauptidee, die wiederkehren oder verarbeitet werden kann."],
+["Motiv","Form","kleine charakteristische musikalische Einheit","Ein winziger Baustein mit Wiedererkennungswert."],
+["Phrase","Form","musikalisch zusammenhängender Abschnitt","Ein musikalischer Satz – ungefähr wie Sprache."],
+["Periode","Form","größerer musikalischer Zusammenhang, oft aus Phrasen","Mehrere Phrasen bilden einen größeren Gedanken."],
+["Reprise","Form","Wiederkehr eines früheren Abschnitts","Bekanntes Material kommt zurück."],
+["Exposition","Sonatenform","Vorstellung des musikalischen Materials","Die Themen werden vorgestellt."],
+["Durchführung","Sonatenform","Verarbeitung und Entwicklung des Materials","Jetzt wird musikalisch mit dem Material gearbeitet."],
+["Sonatenhauptsatzform","Sonatenform","Exposition – Durchführung – Reprise","Eine der wichtigsten Großformen der klassischen Musik."],
+["Thema und Variation","Form","Thema mit anschließenden Veränderungen","Bekanntes Thema, neue musikalische Kleidung."],
+["Suite","Form","Folge meist mehrerer Tanz- oder Charakterstücke","Eine musikalische Sammlung von Sätzen."],
+["Präludium","Form","Vorspiel","Ein einleitendes Stück oder ein einleitender Satz."],
+["Etüde","Form","Übungsstück mit musikalischem Anspruch","Techniktraining – aber bitte mit Musik."],
+["Impromptu","Form","frei wirkendes, spontanes Charakterstück","Klingt improvisiert, ist aber meist komponiert."],
+["Ballade","Form","erzählerisches Charakterstück","Musik mit erzählerischem Charakter."],
+["Serenade","Form","Abend- oder Freiluftmusik","Musikalischer Gruß für den Abend."],
+["Konzert","Form","Werk bzw. Aufführung für Solist(en) und Orchester oder Ensemble","Solist trifft Orchester – musikalisches Kräftemessen inklusive."],
+["Sinfonie","Form","mehrsätziges Werk für Orchester","Eine zentrale Gattung der Orchestermusik."],
+["Kammermusik","Ensemble","Musik für kleine Besetzungen","Wenige Musiker, viel musikalische Verantwortung."],
+["Concerto grosso","Form","barocke Form mit Concertino und Tutti","Kleingruppe gegen größeres Ensemble – musikalisch elegant gelöst."],
+["Da capo al Fine","Form","vom Anfang bis zum Ende","Zurück zum Anfang und bis Fine spielen."],
+["Con sordino","Klang","mit Dämpfer","Der Klang wird durch einen Dämpfer verändert."],
+["Senza sordino","Klang","ohne Dämpfer","Dämpfer weg – freier Klang."],
+["Sul ponticello","Streichinstrumente","nahe am Steg spielen","Erzeugt einen hellen, obertonreichen Klang."],
+["Sul tasto","Streichinstrumente","über dem Griffbrett spielen","Erzeugt einen weicheren, flötigen Klang."]
+
+];
+
+let state=JSON.parse(localStorage.getItem("musikmeister")||'{"xp":0,"correct":{},"seen":{},"streak":0,"lastDay":""}');
+let quiz=[],qi=0,score=0,learnIndex=0;
+
+function save(){localStorage.setItem("musikmeister",JSON.stringify(state));updateHome()}
+function updateHome(){
+ document.getElementById("xp").textContent=state.xp;
+ document.getElementById("mastered").textContent=Object.values(state.correct).filter(x=>x>=3).length;
+ document.getElementById("streak").textContent=state.streak||0;
+ document.getElementById("level").textContent=Math.floor((state.xp||0)/100)+1;
+}
+function show(id){["home","quiz","learn"].forEach(x=>document.getElementById(x).classList.toggle("hidden",x!==id))}
+function goHome(){show("home");updateHome()}
+function startQuiz(){
+ const today=new Date().toISOString().slice(0,10);
+ if(state.lastDay!==today){state.streak=(state.streak||0)+1;state.lastDay=today;save();}
+ quiz=weightedTerms(10);qi=0;score=0;show("quiz");renderQuestion();
+}
+function weightedTerms(n){
+ let pool=[];
+ terms.forEach((t,i)=>{
+   let c=state.correct[i]||0, weight=Math.max(1,4-c);
+   for(let j=0;j<weight;j++)pool.push(i);
+ });
+ let out=[];
+ while(out.length<n){
+   let i=pool[Math.floor(Math.random()*pool.length)];
+   if(!out.includes(i)||out.length>=terms.length)out.push(i);
+ }
+ return out.map(i=>terms[i]);
+}
+function renderQuestion(){
+ if(qi>=quiz.length){finishQuiz();return}
+ let t=quiz[qi];
+ document.getElementById("counter").textContent=`Frage ${qi+1} von ${quiz.length}`;
+ document.getElementById("progress").style.width=((qi)/quiz.length*100)+"%";
+ document.getElementById("qterm").textContent=t[0];
+ document.getElementById("feedback").innerHTML="";
+ let choices=[t[2]];
+ while(choices.length<4){
+   let x=terms[Math.floor(Math.random()*terms.length)][2];
+   if(!choices.includes(x))choices.push(x);
+ }
+ choices.sort(()=>Math.random()-.5);
+ document.getElementById("answers").innerHTML=choices.map(c=>`<button onclick="answer(this,${JSON.stringify(c)},${JSON.stringify(t[2])})">${c}</button>`).join("");
+}
+function answer(btn,given,right){
+ if(document.getElementById("feedback").innerHTML)return;
+ let ok=given===right;
+ if(ok){score++;state.xp+=10}
+ let idx=terms.findIndex(t=>t[0]===quiz[qi][0]);
+ state.correct[idx]=(state.correct[idx]||0)+(ok?1:0);
+ save();
+ document.getElementById("feedback").innerHTML=ok
+ ? `<div class="card"><b>✅ Richtig!</b><p>${quiz[qi][3]}</p><button class="good" onclick="qi++;renderQuestion()">Weiter →</button></div>`
+ : `<div class="card"><b>❌ Noch nicht.</b><p><b>${quiz[qi][0]}</b> = ${right}</p><button class="bad" onclick="qi++;renderQuestion()">Weiter →</button></div>`;
+}
+function finishQuiz(){
+ document.getElementById("progress").style.width="100%";
+ document.getElementById("counter").textContent="Geschafft!";
+ document.getElementById("qterm").textContent=`${score} / ${quiz.length}`;
+ document.getElementById("answers").innerHTML="";
+ document.getElementById("feedback").innerHTML=`<div class="card"><div class="emoji">${score>=8?"🏆":score>=5?"🎵":"💪"}</div><h2>${score>=8?"Wagissimo!":score>=5?"Gut gemacht!":"Weiter üben!"}</h2><p>Dein Ergebnis: ${score} von ${quiz.length}</p><button class="primary" onclick="goHome()">Zur Startseite</button></div>`;
+}
+function startLearn(){learnIndex=0;show("learn");renderLearn()}
+function renderLearn(){
+ let t=terms[learnIndex%terms.length];
+ document.getElementById("lcat").textContent=t[1];
+ document.getElementById("lterm").textContent=t[0];
+ document.getElementById("lmeaning").textContent=t[2];
+ document.getElementById("lexample").textContent=t[3];
+}
+function nextLearn(){learnIndex++;renderLearn()}
+updateHome();
+</script>
+</body>
+</html>
