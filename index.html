@@ -121,8 +121,20 @@ let i=quiz[qi],t=TERMS[i], type=Math.random()<.5?"meaning":"term";
 let correct=type==="meaning"?t[2]:t[0];
 let pool=TERMS.filter((_,j)=>j!==i).sort(()=>Math.random()-.5).slice(0,3).map(x=>type==="meaning"?x[2]:x[0]);
 let opts=[correct,...pool].sort(()=>Math.random()-.5);
-a.innerHTML=`<header><div class="brand">🎯 Quiz</div><div class="level">${qi+1} / ${quiz.length}</div></header><div class="card"><div class="tiny">+10 XP bei richtiger Antwort</div><div class="question">${type==="meaning"?"Was bedeutet:": "Welcher Begriff passt zu:"}<br><span style="color:#cbb8ff">${type==="meaning"?t[0]:"„"+t[2]+"“"}</span></div>${opts.map(o=>`<button class="choice" onclick="answerQuiz(this,${JSON.stringify(o)},${JSON.stringify(correct)},${i})">${o}</button>`).join("")}</div>`}
-function answerQuiz(btn,o,c,i){document.querySelectorAll(".choice").forEach(x=>x.disabled=true);let ok=o===c;btn.classList.add(ok?"correct":"wrong");if(ok)score++;else wrong.push(i);rec(i,ok);setTimeout(()=>{qi++; if(qi<quiz.length)renderQuiz();else showResult()},650)}
+currentQuizOptions=opts; currentQuizCorrect=correct;
+a.innerHTML=`<header><div class="brand">🎯 Quiz</div><div class="level">${qi+1} / ${quiz.length}</div></header><div class="card"><div class="tiny">+10 XP bei richtiger Antwort</div><div class="question">${type==="meaning"?"Was bedeutet:": "Welcher Begriff passt zu:"}<br><span style="color:#cbb8ff">${type==="meaning"?t[0]:"„"+t[2]+"“"}</span></div>${opts.map((o,k)=>`<button class="choice" onclick="answerQuiz(this,${k})">${o}</button>`).join("")}</div>`}
+let currentQuizOptions=[];
+let currentQuizCorrect="";
+function answerQuiz(btn,k){
+  document.querySelectorAll(".choice").forEach(x=>x.disabled=true);
+  const o=currentQuizOptions[k], c=currentQuizCorrect;
+  const i=quiz[qi];
+  const ok=o===c;
+  btn.classList.add(ok?"correct":"wrong");
+  if(ok)score++;else wrong.push(i);
+  rec(i,ok);
+  setTimeout(()=>{qi++; if(qi<quiz.length)renderQuiz();else showResult()},650)
+}
 function showResult(){let pct=Math.round(score/quiz.length*100);if(score>=(quiz.length*.8))confetti();let msg=score===10?"Wagi ist sprachlos. 🏆":score>=8?"Sehr stark! Wagi nickt anerkennend. 😎":score>=5?"Solide! Aber da geht noch was. 😏":"Keine Panik. Wagi hat auch klein angefangen. 😂";document.getElementById("app").innerHTML=`<div class="result"><div class="badge">${score===10?"🏆":score>=8?"🔥":score>=5?"🎵":"💪"}</div><h1>Quiz beendet!</h1><div class="score">${score}/${quiz.length}</div><p>${pct}% richtig</p><p class="muted">${msg}</p><div class="card">⭐ ${score*10} XP verdient<br>🔥 Lernserie: ${user.streak} Tage</div><div class="actions"><button class="btn primary" onclick="startQuiz()">🎯 Neues Quiz</button><button class="btn" onclick="reviewWrong()">🧠 Fehler wiederholen</button></div><button class="btn" style="margin-top:10px;width:100%" onclick="setPage('home')">🏠 Zur Startseite</button></div>`}
 function reviewWrong(){if(!wrong.length){alert("Keine Fehler – perfekt! 🏆");return}quiz=[...new Set(wrong)];qi=0;score=0;wrong=[];renderQuiz()}
 function renderStats(a){
@@ -141,8 +153,18 @@ function achievements(){return[
 ]}
 let sq=[],sqi=0,ss=0;
 function symbolQuiz(){sq=[...symbols].sort(()=>Math.random()-.5).slice(0,10);sqi=0;ss=0;renderSymbol()}
-function renderSymbol(){let s=sq[sqi],correct=s[1],opts=[correct,...symbols.filter(x=>x[1]!==correct).sort(()=>Math.random()-.5).slice(0,3).map(x=>x[1])].sort(()=>Math.random()-.5);document.getElementById("app").innerHTML=`<header><div class="brand">🎼 Symbol-Quiz</div><div class="level">${sqi+1} / ${sq.length}</div></header><div class="card" style="text-align:center"><div style="font-size:85px;margin:15px">${s[0]}</div><div class="question">Was bedeutet dieses Zeichen?</div>${opts.map(o=>`<button class="choice" onclick="answerSymbol(this,${JSON.stringify(o)},${JSON.stringify(correct)})">${o}</button>`).join("")}</div>`}
-function answerSymbol(btn,o,c){document.querySelectorAll(".choice").forEach(x=>x.disabled=true);let ok=o===c;btn.classList.add(ok?"correct":"wrong");if(ok)ss++;addXP(ok?8:2);touch();setTimeout(()=>{sqi++;sqi<sq.length?renderSymbol():symbolResult()},550)}
+function renderSymbol(){let s=sq[sqi],correct=s[1],opts=[correct,...symbols.filter(x=>x[1]!==correct).sort(()=>Math.random()-.5).slice(0,3).map(x=>x[1])].sort(()=>Math.random()-.5);document.getElementById("app").innerHTML=`<header><div class="brand">🎼 Symbol-Quiz</div><div class="level">${sqi+1} / ${sq.length}</div></header><div class="card" style="text-align:center"><div style="font-size:85px;margin:15px">${s[0]}</div><div class="question">Was bedeutet dieses Zeichen?</div>${opts.map((o,k)=>`<button class="choice" onclick="answerSymbol(this,${k})">${o}</button>`).join("")}</div>`}
+let currentSymbolOptions=[];
+let currentSymbolCorrect="";
+function answerSymbol(btn,k){
+  document.querySelectorAll(".choice").forEach(x=>x.disabled=true);
+  const o=currentSymbolOptions[k], c=currentSymbolCorrect;
+  const ok=o===c;
+  btn.classList.add(ok?"correct":"wrong");
+  if(ok)ss++;
+  addXP(ok?8:2);touch();
+  setTimeout(()=>{sqi++;sqi<sq.length?renderSymbol():symbolResult()},550)
+}
 function symbolResult(){document.getElementById("app").innerHTML=`<div class="result"><div class="badge">🎼</div><h1>Symbol-Quiz fertig!</h1><div class="score">${ss}/${sq.length}</div><p>+${ss*8+(sq.length-ss)*2} XP</p><button class="btn primary" style="width:100%" onclick="symbolQuiz()">🔁 Nochmal</button><button class="btn" style="width:100%;margin-top:10px" onclick="setPage('stats')">🏆 Profil</button></div>`}
 function confetti(){let c=document.createElement("div");c.className="confetti";for(let i=0;i<70;i++){let e=document.createElement("i");e.style.left=Math.random()*100+"%";e.style.top=(-10-Math.random()*20)+"%";e.style.transform=`rotate(${Math.random()*180}deg)`;e.style.animationDelay=Math.random()*.6+"s";c.appendChild(e)}document.body.appendChild(c);setTimeout(()=>c.remove(),2300)}
 
@@ -221,17 +243,20 @@ function renderNoteQuestion(){
   <div class="note-dot" style="left:55%;top:${Math.max(18,Math.min(165,top))}px"></div>
   <div class="note-stem" style="left:56%;top:${Math.max(8,Math.min(125,top-48))}px"></div></div>
   <div class="question">Welche Note ist das?</div>
-  ${opts.map(o=>`<button class="choice" onclick="answerNote(this,${JSON.stringify(o)},${JSON.stringify(n.note)})">${o}</button>`).join("")}
+  ${opts.map((o,k)=>`<button class="choice" onclick="answerNote(this,${k})">${o}</button>`).join("")}
   </div>`;
 }
-function answerNote(btn,o,c){
+let currentNoteOptions=[];
+function answerNote(btn,k){
+  const o=currentNoteOptions[k], c=noteQuestion.note;
   document.querySelectorAll(".choice").forEach(x=>x.disabled=true);
   const ok=o===c;
   btn.classList.add(ok?"correct":"wrong");
-  if(ok){noteScore++;noteState.correct++;addXP(noteMode==="speed"?12:10)}
-  else noteState.wrong++;
+  if(ok)noteScore++;else {}
+  noteState[ok?"correct":"wrong"]++;
   noteState.mastered[c]=Math.min(5,(noteState.mastered[c]||0)+(ok?1:0));
-  saveNotes(); touch();
+  addXP(noteMode==="speed"? (ok?12:2) : (ok?10:2));
+  touch();saveNotes();
   setTimeout(()=>{noteRound++;nextNoteQuestion()},500);
 }
 function noteResult(){
@@ -303,9 +328,9 @@ function keyResult(){
 }
 
 function todaySession(){
-  const ids=due().slice(0,5);
-  if(ids.length){
-    quiz=ids;qi=0;score=0;wrong=[];
+  const termIds=due().slice(0,5);
+  if(termIds.length){
+    quiz=termIds;qi=0;score=0;wrong=[];
     renderQuiz();
   }else{
     keyboardGame("noteToKey");
