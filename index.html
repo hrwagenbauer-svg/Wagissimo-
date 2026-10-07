@@ -235,6 +235,7 @@ function renderNoteQuestion(){
   const n=noteQuestion;
   const pool=noteSets[n.clef].filter(x=>x[0]!==n.note).sort(()=>Math.random()-.5).slice(0,3).map(x=>x[0]);
   const opts=[n.note,...pool].sort(()=>Math.random()-.5);
+  currentNoteOptions=opts;
   const top=58+n.pos*8;
   document.getElementById("app").innerHTML=`
   <header><div class="brand">🎹 ${noteMode==="speed"?"Speed-Training":"Notenquiz"}</div><div class="level">${noteRound+1} / 10</div></header>
