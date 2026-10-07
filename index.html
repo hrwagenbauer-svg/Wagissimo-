@@ -28,13 +28,12 @@ nav{position:fixed;bottom:0;left:0;right:0;background:rgba(20,17,29,.94);backdro
 .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:20}.confetti i{position:absolute;width:7px;height:13px;background:#fff;animation:fall 1.8s linear forwards}@keyframes fall{to{transform:translateY(110vh) rotate(600deg);opacity:0}}
 @media(min-width:650px){.grid{grid-template-columns:repeat(4,1fr)}}
 
-.notes-staff{position:relative;height:190px;margin:18px 0;border-radius:18px;background:#f7f3eb;overflow:hidden;color:#171225}
-.staff-line{position:absolute;left:9%;right:9%;height:2px;background:#222;z-index:1}
-.staff-line.l0{top:65px}.staff-line.l1{top:83px}.staff-line.l2{top:101px}.staff-line.l3{top:119px}.staff-line.l4{top:137px}
-.clef{position:absolute;left:12%;top:72px;font-size:68px;line-height:1;z-index:2;font-family:serif}
-.note-dot{position:absolute;width:25px;height:18px;border-radius:50%;background:#171225;transform:translate(-50%,-50%) rotate(-12deg);z-index:3}
-.note-stem{position:absolute;width:3px;height:52px;background:#171225;z-index:3}
-.clef{position:absolute;left:11%;top:31px;font-size:75px;font-family:serif;z-index:3}
+.notes-staff{position:relative;height:220px;margin:18px 0;border-radius:18px;background:#f7f3eb;overflow:hidden;color:#171225}
+.staff-svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.staff-line{stroke:#171225;stroke-width:2}
+.staff-clef{font-family:"Noto Music","Bravura","Segoe UI Symbol","Times New Roman",serif;font-size:76px;font-weight:400}
+.staff-note{fill:#171225;stroke:#171225;stroke-width:1}
+.staff-stem{stroke:#171225;stroke-width:3;stroke-linecap:round}
 .note-answer{font-size:25px;font-weight:900;text-align:center;margin:10px 0}
 
 .keyboard{display:flex;justify-content:center;position:relative;height:145px;margin:15px 0 8px;overflow:hidden;border-radius:14px;background:#0d0b12;padding:0 8px 8px}
@@ -241,25 +240,54 @@ function renderNoteQuestion(){
   const pool=noteSets[n.clef].filter(x=>x[0]!==n.note).sort(()=>Math.random()-.5).slice(0,3).map(x=>x[0]);
   const opts=[n.note,...pool].sort(()=>Math.random()-.5);
   currentNoteOptions=opts;
-  // 5 echte Notenlinien; Position 0 liegt auf der untersten Linie.
-  const y=137-(n.pos*9);
-  const stemUp=n.pos<5;
-  const stemTop=stemUp ? y-50 : y;
+
+  // Echtes 5-Linien-System: im Violinschlüssel ist E4 die unterste Linie,
+  // im Bassschlüssel G2. Die Noten steigen Schritt für Schritt nach oben.
+  const bottomY=150, lineGap=16, step=8;
+  const y=bottomY-(n.pos*step);
+  const noteX=205;
+  const stemUp=n.pos<=4;
+  const stemX=stemUp?noteX+11:noteX-11;
+  const stemY2=stemUp?y-52:y+52;
+
+  let extra='';
+  if(n.pos<0){
+    for(let p=-2;p>=n.pos;p-=2){
+      const ly=bottomY-(p*step);
+      extra+=`<line class="staff-line" x1="168" x2="242" y1="${ly}" y2="${ly}"/>`;
+    }
+  }
+  if(n.pos>8){
+    for(let p=10;p<=n.pos;p+=2){
+      const ly=bottomY-(p*step);
+      extra+=`<line class="staff-line" x1="168" x2="242" y1="${ly}" y2="${ly}"/>`;
+    }
+  }
+
+  const lines=[0,1,2,3,4].map(i=>{
+    const ly=bottomY-i*lineGap;
+    return `<line class="staff-line" x1="70" x2="320" y1="${ly}" y2="${ly}"/>`;
+  }).join('');
+  const clef=n.clef==='treble'?'𝄞':'𝄢';
+  const clefY=n.clef==='treble'?168:160;
+
   document.getElementById("app").innerHTML=`
   <header><div class="brand">🎹 ${noteMode==="speed"?"Speed-Training":"Notenquiz"}</div><div class="level">${noteRound+1} / 10</div></header>
-  <div class="card"><div class="tiny">${n.clef==="treble"?"Violinschlüssel":"Bassschlüssel"}</div>
+  <div class="card"><div class="tiny">${n.clef==="treble"?"Violinschlüssel · E4 = 1. Linie":"Bassschlüssel · G2 = 1. Linie"}</div>
   <div class="notes-staff">
-    <div class="staff-line l0"></div><div class="staff-line l1"></div><div class="staff-line l2"></div><div class="staff-line l3"></div><div class="staff-line l4"></div>
-    <div class="clef">${n.clef==="treble"?"𝄞":"𝄢"}</div>
-    ${Array.from({length:Math.max(0,Math.floor((-n.pos)/2))}).map((_,i)=>`<div style="position:absolute;left:51%;width:42px;height:2px;background:#222;top:${y-18*(i+1)}px;transform:translateX(-50%);z-index:2"></div>`).join("")}
-    ${Array.from({length:Math.max(0,Math.floor((n.pos-8)/2))}).map((_,i)=>`<div style="position:absolute;left:51%;width:42px;height:2px;background:#222;top:${y+18*(i+1)}px;transform:translateX(-50%);z-index:2"></div>`).join("")}
-    <div class="note-dot" style="left:55%;top:${y}px"></div>
-    <div class="note-stem" style="left:${stemUp?"57%":"53%"};top:${stemTop}px;height:50px"></div>
+    <svg class="staff-svg" viewBox="0 0 375 220" aria-label="Notensystem mit ${n.note}">
+      ${lines}
+      ${extra}
+      <text class="staff-clef" x="78" y="${clefY}">${clef}</text>
+      <ellipse class="staff-note" cx="${noteX}" cy="${y}" rx="13" ry="9" transform="rotate(-18 ${noteX} ${y})"/>
+      <line class="staff-stem" x1="${stemX}" y1="${y}" x2="${stemX}" y2="${stemY2}"/>
+    </svg>
   </div>
   <div class="question">Welche Note ist das?</div>
   ${opts.map((o,k)=>`<button class="choice" onclick="answerNote(this,${k})">${o}</button>`).join("")}
   </div>`;
 }
+
 let currentNoteOptions=[];
 function answerNote(btn,k){
   const o=currentNoteOptions[k], c=noteQuestion.note;

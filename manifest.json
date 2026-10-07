@@ -1,10 +1,9 @@
 {
-  "name":"Wagissimo – Musik lernen",
+  "name":"Wagissimo",
   "short_name":"Wagissimo",
   "start_url":"./",
   "display":"standalone",
-  "background_color":"#0f0d18",
-  "theme_color":"#171225",
-  "lang":"de",
+  "background_color":"#0f0b1a",
+  "theme_color":"#6d4aff",
   "icons":[]
 }
