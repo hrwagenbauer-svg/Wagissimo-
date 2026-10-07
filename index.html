@@ -17,7 +17,7 @@ nav{display:flex;background:#ffffff22;border-radius:14px;padding:4px;margin-bott
 <body>
 <div class="app">
 <div class="logo">🎼 WAGISSIMO</div><div class="sub">Musik lernen. Aber bitte mit Wagi. 😎</div>
-<nav><button id="learnTab" class="active">Lernen</button><button id="quizTab">Quiz</button></nav>
+<nav><button type="button" id="learnTab" class="active">Lernen</button><button type="button" id="quizTab">Quiz</button></nav>
 <div id="content"></div><div class="stats" id="stats"></div>
 </div>
 <script>
@@ -26,14 +26,16 @@ const terms=[
 let i=0,revealed=false,score=0,mode="learn";
 const content=document.getElementById("content"),stats=document.getElementById("stats");
 function render(){
- if(mode==="learn") content.innerHTML=`<div class="card"><div class="badge">${terms[i][2].toUpperCase()}</div><div class="term">${terms[i][0]}</div>${revealed?`<div class="answer">${terms[i][1]}</div>`:`<div class="small">Was bedeutet das?</div>`}<button class="btn" onclick="${revealed?'next()':'show()'}">${revealed?"Weiter →":"Antwort zeigen"}</button></div>`;
+ if(mode==="learn") content.innerHTML=`<div class="card"><div class="badge">${terms[i][2].toUpperCase()}</div><div class="term">${terms[i][0]}</div>${revealed?`<div class="answer">${terms[i][1]}</div>`:`<div class="small">Was bedeutet das?</div>`}<button type="button" class="btn" onclick="${revealed?'next()':'show()'}">${revealed?"Weiter →":"Antwort zeigen"}</button></div>`;
  else {
   let opts=[terms[i][1]];while(opts.length<4){let x=terms[Math.floor(Math.random()*terms.length)][1];if(!opts.includes(x))opts.push(x)}opts.sort(()=>Math.random()-.5);
-  content.innerHTML=`<div class="card"><div class="badge">QUIZ · ${terms[i][2].toUpperCase()}</div><div class="term">${terms[i][0]}</div><div class="answers">${opts.map(x=>`<button onclick="answer(${JSON.stringify(x)})">${x}</button>`).join("")}</div><div class="small">Wagi sagt: „Keine Sorge. Mozart hat auch klein angefangen.“ 😎</div></div>`;
+  content.innerHTML=`<div class="card"><div class="badge">QUIZ · ${terms[i][2].toUpperCase()}</div><div class="term">${terms[i][0]}</div><div class="answers">${opts.map(x=>`<button type="button" data-answer="${encodeURIComponent(x)}">${x}</button>`).join("")}</div><div class="small">Wagi sagt: „Keine Sorge. Mozart hat auch klein angefangen.“ 😎</div></div>`;
+  document.querySelectorAll(".answers button").forEach(b=>b.addEventListener("click",()=>answer(decodeURIComponent(b.dataset.answer))));
  }
  stats.textContent=`Begriff ${i+1} von ${terms.length} · Punkte: ${score}`;
 }
-function show(){revealed=true;render()} function next(){i=(i+1)%terms.length;revealed=false;render()}
+function show(){revealed=true;render()}
+function next(){i=(i+1)%terms.length;revealed=false;render()}
 function answer(x){if(x===terms[i][1])score++;next()}
 learnTab.onclick=()=>{mode="learn";learnTab.classList.add("active");quizTab.classList.remove("active");render()}
 quizTab.onclick=()=>{mode="quiz";quizTab.classList.add("active");learnTab.classList.remove("active");render()}
